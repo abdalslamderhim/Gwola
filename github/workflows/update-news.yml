@@ -1,0 +1,36 @@
+name: تحديث الأخبار تلقائيًا
+
+on:
+  schedule:
+    # كل ساعة، على مدار اليوم (توقيت UTC)
+    - cron: "0 * * * *"
+  workflow_dispatch: {}
+    # يسمح بتشغيل التحديث يدويًا من تبويب Actions في GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: سحب المستودع
+        uses: actions/checkout@v4
+
+      - name: إعداد Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: جلب الأخبار وتحديث data/news.json
+        env:
+          GNEWS_API_KEY: ${{ secrets.GNEWS_API_KEY }}
+        run: node scripts/fetch-news.js
+
+      - name: حفظ التغييرات (Commit)
+        run: |
+          git config user.name "algwola-news-bot"
+          git config user.email "actions@github.com"
+          git add data/news.json
+          git diff --cached --quiet || git commit -m "تحديث تلقائي للأخبار"
+          git push
