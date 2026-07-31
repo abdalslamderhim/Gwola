@@ -321,3 +321,11 @@
     .team-grid{grid-template-columns:1fr;}
     .team-hero{padding:30px 22px;}
   }
+
+  /* ===== Source attribution link (real news via API) ===== */
+  .source-link{
+    display:inline-flex; align-items:center; gap:6px; margin-top:10px;
+    padding:12px 22px; border-radius:24px; background:var(--red); color:#fff;
+    font-weight:800; font-size:14px; transition:.2s;
+  }
+  .source-link:hover{background:var(--red-deep);}
