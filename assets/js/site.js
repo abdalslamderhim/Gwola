@@ -89,6 +89,24 @@ function showError(container, message){
   container.innerHTML = `<div style="padding:24px; text-align:center; color:var(--ink-soft);">${message}</div>`;
 }
 
+// يحوّل تاريخ ISO (من الأخبار الحقيقية) إلى نص نسبي مثل "منذ 3 ساعات"
+function relativeTime(isoString, fallback){
+  if(!isoString) return fallback || '';
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if(mins < 1) return 'الآن';
+  if(mins < 60) return `منذ ${mins} دقيقة`;
+  const hours = Math.floor(mins / 60);
+  if(hours < 24) return `منذ ${hours} ساعة`;
+  const days = Math.floor(hours / 24);
+  if(days === 1) return 'أمس';
+  return `منذ ${days} أيام`;
+}
+
+function timeLabel(item){
+  return item.publishedAt ? relativeTime(item.publishedAt) : (item.time || '');
+}
+
 /* ---------------------------------------------------------------------- */
 /* رسم الصفحة الرئيسية */
 /* ---------------------------------------------------------------------- */
@@ -117,7 +135,7 @@ async function renderHome(){
         el('h1', {text:f.title}),
         el('p', {text:f.excerpt}),
         el('div', {class:'meta-row'}, [
-          el('span', {text:f.author}), el('span', {text:f.time}), el('span', {text:f.readTime})
+          el('span', {text:f.author}), el('span', {text:timeLabel(f)}), el('span', {text:f.readTime})
         ])
       ]));
       heroMain.style.cursor = 'pointer';
@@ -130,7 +148,7 @@ async function renderHome(){
         const card = el('a', {class:'side-card', href:`article.html?id=${h.id}`}, [
           el('span', {class:'cat', text:h.category}),
           el('h3', {text:h.title}),
-          el('span', {class:'time', text:h.time})
+          el('span', {class:'time', text:timeLabel(h)})
         ]);
         heroSide.appendChild(card);
       });
@@ -149,7 +167,7 @@ async function renderHome(){
               el('h3', {text:a.title}),
               el('p', {text:a.excerpt}),
               el('div', {class:'foot'}, [
-                el('span', {text:a.author}), el('span', {text:a.time})
+                el('span', {text:a.author}), el('span', {text:timeLabel(a)})
               ])
             ])
           ])
@@ -223,12 +241,19 @@ async function renderArticle(){
     container.appendChild(el('h1', {text:article.title}));
     container.appendChild(el('div', {class:'meta-row', style:'margin:14px 0 26px;'}, [
       el('span', {text:article.author}),
-      el('span', {text:article.time}),
+      el('span', {text:timeLabel(article)}),
       el('span', {text:article.readTime || ''})
     ]));
-    (article.body || [article.excerpt]).forEach(p=>{
-      container.appendChild(el('p', {class:'article-p', text:p}));
+    (article.body && article.body.length ? article.body : [article.excerpt]).forEach(p=>{
+      if(p) container.appendChild(el('p', {class:'article-p', text:p}));
     });
+    if(article.sourceUrl){
+      container.appendChild(el('a', {
+        href: article.sourceUrl, target:'_blank', rel:'noopener noreferrer',
+        class:'source-link',
+        text: `اقرأ القصة كاملة على ${article.sourceName || 'المصدر الأصلي'} ↗`
+      }));
+    }
 
     if(relatedGrid){
       relatedGrid.innerHTML = '';
@@ -241,7 +266,7 @@ async function renderArticle(){
             ]),
             el('div', {class:'body'}, [
               el('h3', {text:a.title}),
-              el('div', {class:'foot'}, [el('span', {text:a.author}), el('span', {text:a.time})])
+              el('div', {class:'foot'}, [el('span', {text:a.author}), el('span', {text:timeLabel(a)})])
             ])
           ])
         ]);
